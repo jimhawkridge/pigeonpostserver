@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Send a Message by Pigeon</h1>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-4">
+        <div class="form-group">
+            <label for="message">Enter your message:</label>
+            <textarea id="message" class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+            <span class="btn btn-default btn-file">
+                Upload Image <input type="file" id="image" name="image">
+            </span>
+            <button id="go" class="btn btn-primary pull-right">Send Message</button>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <label>Preview:</label>
+        <div id="preview" class="postcard">
+            <div id="preview-text">
+            </div>
+            <img id="preview-image" />
+        </div>
+    </div>
+
+
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript">
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie != '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        var csrftoken = getCookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+        $('#image').change( function() { 
+            var file = $('#image')[0].files[0];
+            var fd = new FormData();
+            fd.append('image', file, file.name);
+            $.ajax({
+                url: '/messages/imageupload/',
+                data: fd,
+                processData: false,
+                contentType: false,
+                type: 'POST'
+            }).done(function() {
+                $('#preview-image').attr('src', '/messages/getimage/').css('display', 'inline');
+            });
+        });
+
+        $('#message').keyup( function() {
+            $('#preview-text').text( $('#message').val() );
+        });
+        $('#message').val('')
+
+        $('#go').click( function() {
+            $.post('/messages/enqueue/', {text: $('#message').val()});
+        });
+    </script>
+
+    <style>
+    body {
+        background-color: #ffa;
+    }
+
+    #preview-text {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        padding: 10px;
+        font-family: Verdana;
+        font-size: 12pt;
+    }
+
+    #preview {
+        border: 1px solid #aaa;
+        box-shadow: 5px 5px 3px 3px rgba(0, 0, 0, 0.75);
+        height: 402px;
+        width: 605px;
+        background-color: #fff;
+        padding: 0;
+        position: relative;
+    }
+
+    #preview.postcard #preview-text
+    {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 380px;
+    }
+
+    #preview.postcard #preview-image
+    {
+        position: absolute;
+        top: 0;
+        left: 300px;
+        /* width: 300px;
+        height: 400px; */
+        display: none;
+    }
+
+    #message {
+        height: 300px;
+    }
+
+    .btn-file {
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-file input[type=file] {
+        position: absolute;
+        top: 0;
+        right: 0;
+        min-width: 100%;
+        min-height: 100%;
+        font-size: 999px;
+        text-align: right;
+        filter: alpha(opacity=0);
+        opacity: 0;
+        outline: none;
+        background: white;
+        cursor: inherit;
+        display: block;
+    }
+    </style>
+{% endblock content %}
